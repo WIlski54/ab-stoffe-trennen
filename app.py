@@ -1125,8 +1125,13 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         print(f'[KI] {anbieter}/{modell}: keine Verbindung ({type(e).__name__})', flush=True)
         raise KiFehler('netz', f'keine Verbindung ({type(e).__name__}: {str(e)[:120]})')
-    except ValueError:
-        raise KiFehler('dienst')
+    except UnicodeEncodeError:
+        # Der Key landet im HTTP-Kopf und darf nur einfache Zeichen enthalten (oft: unsichtbares Zeichen beim Kopieren).
+        print(f'[KI] {anbieter}/{modell}: Key enthält ungültige Zeichen', flush=True)
+        raise KiFehler('schluessel', 'Der Key enthält ungültige (evtl. unsichtbare) Zeichen. Bitte neu kopieren.')
+    except ValueError as e:
+        print(f'[KI] {anbieter}/{modell}: keine gültige Antwort ({type(e).__name__}: {str(e)[:120]})', flush=True)
+        raise KiFehler('dienst', f'keine gültige Antwort ({type(e).__name__}: {str(e)[:120]})')
     try:
         if anbieter == 'anthropic':
             text = ''.join(b.get('text', '') for b in antwort['content'] if b.get('type') == 'text')
@@ -1300,8 +1305,9 @@ def on_ki_einstellung(data):
                       anbieter=neu['anbieter'], modell=neu['modell'], key=neu['key'])
         except KiFehler as e:
             return {'ok': False, 'fehler': 'test_' + e.grund, 'detail': e.detail}      # nichts übernommen
-        except Exception:
-            return {'ok': False, 'fehler': 'test_dienst'}
+        except Exception as e:
+            print(f'[KI] Test: unerwarteter Fehler {type(e).__name__}: {str(e)[:200]}', flush=True)
+            return {'ok': False, 'fehler': 'test_dienst', 'detail': f'{type(e).__name__}: {str(e)[:200]}'}
     KI.update(neu)
     ki_status_verteilen()
     return {'ok': True, 'status': ki_status()}
