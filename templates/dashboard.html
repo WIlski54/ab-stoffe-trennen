@@ -639,7 +639,8 @@
   function kiSenden(daten, ok) {
     socket.emit('ki_einstellung', daten, function (res) {
       if (res && res.ok) { KI = res.status; kiZeigen(); if (ok) { ok(); } }
-      else { kiMeldung(KI_FEHLER[res && res.fehler] || 'Das war gerade nicht möglich.', false); }
+      else { kiMeldung((KI_FEHLER[res && res.fehler] || 'Das war gerade nicht möglich.') +
+                       (res && res.detail ? ' – Meldung des Anbieters: ' + res.detail : ''), false); }
     });
   }
   document.getElementById('ki-knopf').addEventListener('click', function () { kiPanel(document.getElementById('ki-panel').hidden); });
@@ -668,6 +669,10 @@
     });
   });
   socket.on('ki_status', function (st) { KI = st; kiZeigen(); });
+  socket.on('ki_fehler_lehrer', function (d) {
+    kiPanel(true);
+    kiMeldung('Eine KI-Anfrage ist fehlgeschlagen (' + d.grund + ')' + (d.detail ? ': ' + d.detail : '.'), false);
+  });
   kiZeigen();
 
   render();

@@ -1076,8 +1076,9 @@ KI_SYSTEM = (
 
 
 class KiFehler(Exception):
-    def __init__(self, grund):
+    def __init__(self, grund, detail=''):
         super().__init__(grund)
+        self.detail = detail     # Meldung des Anbieters (ohne Key), nur für die Lehrkraft
         self.grund = grund       # schluessel | limit | modell | netz | dienst | leer
 
 
@@ -1115,15 +1116,15 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
             meldung = meldung.replace(key, '***')
         print(f'[KI] {anbieter}/{modell}: HTTP {e.code} {meldung}', flush=True)
         if e.code in (401, 403) or 'API key' in meldung or 'API_KEY' in meldung:
-            raise KiFehler('schluessel')      # Google meldet einen ungültigen Key mit HTTP 400
+            raise KiFehler('schluessel', f'HTTP {e.code} {meldung}')      # Google meldet einen ungültigen Key mit HTTP 400
         if e.code == 429:
-            raise KiFehler('limit')
+            raise KiFehler('limit', f'HTTP {e.code} {meldung}')
         if e.code == 404:
-            raise KiFehler('modell')
-        raise KiFehler('dienst')
+            raise KiFehler('modell', f'HTTP {e.code} {meldung}')
+        raise KiFehler('dienst', f'HTTP {e.code} {meldung}')
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         print(f'[KI] {anbieter}/{modell}: keine Verbindung ({type(e).__name__})', flush=True)
-        raise KiFehler('netz')
+        raise KiFehler('netz', f'keine Verbindung ({type(e).__name__}: {str(e)[:120]})')
     except ValueError:
         raise KiFehler('dienst')
     try:
@@ -1133,11 +1134,11 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
             text = ''.join(p.get('text', '') for p in antwort['candidates'][0]['content']['parts'])
     except (KeyError, IndexError, TypeError, AttributeError):
         print(f'[KI] {anbieter}/{modell}: unerwartete Antwort {json.dumps(antwort)[:300]}', flush=True)
-        raise KiFehler('dienst')
+        raise KiFehler('dienst', 'unerwartete Antwort: ' + json.dumps(antwort)[:200])
     text = text.strip()
     if not text:
         print(f'[KI] {anbieter}/{modell}: leere Antwort {json.dumps(antwort)[:300]}', flush=True)
-        raise KiFehler('leer')
+        raise KiFehler('leer', 'leere Antwort: ' + json.dumps(antwort)[:200])
     return text[:1500]
 
 
@@ -1211,6 +1212,7 @@ def ki_arbeit(sid, nr):
             text = ki_aufruf(ki_system(sid, nr), ki_nachrichten(sid, nr))
         except KiFehler as e:
             ki_ereignis(sid, 'ki_fehler', {'aufgabe': nr, 'grund': e.grund})
+            socketio.emit('ki_fehler_lehrer', {'grund': e.grund, 'detail': e.detail}, to='lehrer_room')
             return
         except Exception as e:                             # nie den Worker mit unerwarteten Fehlern abbrechen
             print(f'[KI] unerwarteter Fehler: {type(e).__name__}: {str(e)[:200]}', flush=True)
@@ -1297,7 +1299,7 @@ def on_ki_einstellung(data):
             ki_aufruf('Antworte nur mit dem Wort OK.', [{'rolle': 'user', 'text': 'Test'}],
                       anbieter=neu['anbieter'], modell=neu['modell'], key=neu['key'])
         except KiFehler as e:
-            return {'ok': False, 'fehler': 'test_' + e.grund}      # nichts übernommen
+            return {'ok': False, 'fehler': 'test_' + e.grund, 'detail': e.detail}      # nichts übernommen
         except Exception:
             return {'ok': False, 'fehler': 'test_dienst'}
     KI.update(neu)
