@@ -997,7 +997,7 @@ def on_disconnect(*args):
 KI_ANBIETER = {
     'anthropic': {'name': 'Claude (Anthropic)', 'modell': 'claude-haiku-5-5',
                   'url': 'https://api.anthropic.com/v1/messages'},
-    'gemini': {'name': 'Gemini (Google)', 'modell': 'gemini-2.5-flash',
+    'gemini': {'name': 'Gemini (Google)', 'modell': 'gemini-3.5-flash-lite',
                'url': 'https://generativelanguage.googleapis.com/v1beta/models/{modell}:generateContent'},
 }
 MODELL_RE = re.compile(r'^[A-Za-z0-9._:-]{1,60}$')
