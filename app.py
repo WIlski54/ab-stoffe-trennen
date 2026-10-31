@@ -1079,7 +1079,7 @@ class KiFehler(Exception):
     def __init__(self, grund, detail=''):
         super().__init__(grund)
         self.detail = detail     # Meldung des Anbieters (ohne Key), nur für die Lehrkraft
-        self.grund = grund       # schluessel | limit | modell | netz | dienst | leer
+        self.grund = grund       # schluessel | guthaben | limit | modell | netz | dienst | leer
 
 
 def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
@@ -1117,6 +1117,8 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
         print(f'[KI] {anbieter}/{modell}: HTTP {e.code} {meldung}', flush=True)
         if e.code in (401, 403) or 'API key' in meldung or 'API_KEY' in meldung:
             raise KiFehler('schluessel', f'HTTP {e.code} {meldung}')      # Google meldet einen ungültigen Key mit HTTP 400
+        if e.code == 402:
+            raise KiFehler('guthaben', f'HTTP {e.code} {meldung}')
         if e.code == 429:
             raise KiFehler('limit', f'HTTP {e.code} {meldung}')
         if e.code == 404:
