@@ -1,0 +1,99 @@
+{#
+  INHALT DES ARBEITSBLATTS
+  ------------------------
+  Nur diese Datei (und AB_META in app.py) ändern, um ein neues AB zu erstellen.
+
+  Regeln:
+  - Jede Aufgabe ist ein <section class="aufgabe" data-aufgabe="N"> (N = 1, 2, 3 ...).
+  - Eingabefelder bekommen ihre IDs automatisch (Reihenfolge innerhalb der Aufgabe).
+    Daher innerhalb einer Aufgabe die Reihenfolge der Felder nicht mehr ändern,
+    sobald Schüler:innen damit arbeiten.
+  - Text:        <input class="eingabe" type="text">   (kurz: class="eingabe kurz")
+  - Ankreuzen:   <input type="checkbox">
+  - Freitext:    <textarea class="eingabe freitext"></textarea>
+  - Schalenmodell: <div class="bohr-wrap" data-widget="bohr"> ... (siehe Aufgabe 4)
+  - Rand rechts mit "Möchte ich vorstellen" und "Ich brauche Hilfe": {{ rand() }}
+#}
+{% macro rand() %}
+<div class="rand">
+  <label class="vorstellen"><input type="checkbox" data-vorstellen><span>Möchte ich vorstellen<span class="status"></span></span></label>
+  <label class="hilfe"><input type="checkbox" data-hilfe><span>🙋 Ich brauche Hilfe<span class="status"></span></span></label>
+</div>
+{% endmacro %}
+
+<!-- ===== Aufgabe 1 ===== -->
+<section class="aufgabe" data-aufgabe="1">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">1</span> Reinstoff oder Gemisch?</h2>
+    <p><strong>Kreuze</strong> an, ob es sich um einen Reinstoff oder um ein Gemisch handelt.</p>
+    <table class="ab">
+      <tr><th>Stoff</th><th>Reinstoff</th><th>Gemisch</th></tr>
+      <tr><td>Salzwasser</td><td class="mitte"><input type="checkbox"></td><td class="mitte"><input type="checkbox"></td></tr>
+      <tr><td>Kochsalz</td><td class="mitte"><input type="checkbox"></td><td class="mitte"><input type="checkbox"></td></tr>
+      <tr><td>Müsli</td><td class="mitte"><input type="checkbox"></td><td class="mitte"><input type="checkbox"></td></tr>
+      <tr><td>destilliertes Wasser</td><td class="mitte"><input type="checkbox"></td><td class="mitte"><input type="checkbox"></td></tr>
+    </table>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 2 ===== -->
+<section class="aufgabe" data-aufgabe="2">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">2</span> Trennen im Alltag</h2>
+    <p><strong>Ordne</strong> jedem Gemisch das passende Trennverfahren zu.</p>
+    <table class="ab">
+      <tr><th>Gemisch</th><th>Trennverfahren</th></tr>
+      <tr><td>Nudeln und Kochwasser</td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Kaffeepulver und Kaffee</td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Meerwasser (Salz gewinnen)</td><td><input class="eingabe" type="text"></td></tr>
+      <tr><td>Eisennägel im Sand</td><td><input class="eingabe" type="text"></td></tr>
+    </table>
+    <p class="hinweis">Wörterkasten: Abgießen · Eindampfen · Filtrieren · Magnettrennung</p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 3 ===== -->
+<section class="aufgabe" data-aufgabe="3">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">3</span> Salz aus dem Sand holen</h2>
+    <p>Tom hat Salz und Sand vermischt. Er möchte das Salz zurückgewinnen.
+       <strong>Nummeriere</strong> die Arbeitsschritte in der richtigen Reihenfolge (1 bis 4).</p>
+    <table class="ab">
+      <tr><th>Arbeitsschritt</th><th style="width:96px">Nr.</th></tr>
+      <tr><td>Das Gemisch filtrieren</td><td><input class="eingabe kurz" type="text" inputmode="numeric"></td></tr>
+      <tr><td>Das Salz-Sand-Gemisch in ein Becherglas mit Wasser geben</td><td><input class="eingabe kurz" type="text" inputmode="numeric"></td></tr>
+      <tr><td>Das Filtrat eindampfen</td><td><input class="eingabe kurz" type="text" inputmode="numeric"></td></tr>
+      <tr><td>Umrühren, bis sich das Salz gelöst hat</td><td><input class="eingabe kurz" type="text" inputmode="numeric"></td></tr>
+    </table>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 4 ===== -->
+<section class="aufgabe" data-aufgabe="4">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">4</span> Fachbegriffe</h2>
+    <p><strong>Vervollständige</strong> den Text.</p>
+    <p style="line-height:2.3">
+      Beim Filtrieren bleibt der Sand als <input class="eingabe luecke" type="text"> im Filter zurück.
+      Die klare Flüssigkeit, die durch den Filter läuft, heißt <input class="eingabe luecke" type="text">.
+      Das Salz ist im Wasser <input class="eingabe luecke" type="text"> und passt deshalb durch den Filter.
+      Beim <input class="eingabe luecke" type="text"> verdampft das Wasser und das Salz bleibt zurück.
+    </p>
+    <p class="hinweis">Wörterkasten: Rückstand · Filtrat · gelöst · Eindampfen · Sieben · geschmolzen</p>
+  </div>
+  {{ rand() }}
+</section>
+
+<!-- ===== Aufgabe 5 ===== -->
+<section class="aufgabe" data-aufgabe="5">
+  <div class="aufgabe-inhalt">
+    <h2><span class="nr">5</span> Lenas Versuch</h2>
+    <p>Lena schüttet das trockene Salz-Sand-Gemisch direkt in den Filter. Unten kommt nichts heraus, und das Salz
+       bleibt beim Sand. <strong>Erkläre</strong>, was Lena falsch gemacht hat und warum man für die Trennung Wasser braucht.</p>
+    <textarea class="eingabe freitext" rows="5"></textarea>
+  </div>
+  {{ rand() }}
+</section>
