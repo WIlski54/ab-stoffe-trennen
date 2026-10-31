@@ -1078,7 +1078,7 @@ KI_SYSTEM = (
 class KiFehler(Exception):
     def __init__(self, grund):
         super().__init__(grund)
-        self.grund = grund       # schluessel | limit | netz | dienst | leer
+        self.grund = grund       # schluessel | limit | modell | netz | dienst | leer
 
 
 def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
@@ -1105,8 +1105,24 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
         with urllib.request.urlopen(req, timeout=KI_TIMEOUT) as r:
             antwort = json.loads(r.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
-        raise KiFehler('schluessel' if e.code in (401, 403) else 'limit' if e.code == 429 else 'dienst')
-    except (urllib.error.URLError, TimeoutError, OSError):
+        # Die Fehlermeldung des Anbieters ins Server-Log schreiben (ohne Key), damit sich Probleme finden lassen.
+        try:
+            info = json.loads(e.read().decode('utf-8', 'replace')).get('error', {})
+            meldung = str(info.get('message', ''))[:300] if isinstance(info, dict) else str(info)[:300]
+        except Exception:
+            meldung = ''
+        if key:
+            meldung = meldung.replace(key, '***')
+        print(f'[KI] {anbieter}/{modell}: HTTP {e.code} {meldung}', flush=True)
+        if e.code in (401, 403) or 'API key' in meldung or 'API_KEY' in meldung:
+            raise KiFehler('schluessel')      # Google meldet einen ungültigen Key mit HTTP 400
+        if e.code == 429:
+            raise KiFehler('limit')
+        if e.code == 404:
+            raise KiFehler('modell')
+        raise KiFehler('dienst')
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        print(f'[KI] {anbieter}/{modell}: keine Verbindung ({type(e).__name__})', flush=True)
         raise KiFehler('netz')
     except ValueError:
         raise KiFehler('dienst')
@@ -1116,9 +1132,11 @@ def ki_aufruf(system, nachrichten, anbieter=None, modell=None, key=None):
         else:
             text = ''.join(p.get('text', '') for p in antwort['candidates'][0]['content']['parts'])
     except (KeyError, IndexError, TypeError, AttributeError):
+        print(f'[KI] {anbieter}/{modell}: unerwartete Antwort {json.dumps(antwort)[:300]}', flush=True)
         raise KiFehler('dienst')
     text = text.strip()
     if not text:
+        print(f'[KI] {anbieter}/{modell}: leere Antwort {json.dumps(antwort)[:300]}', flush=True)
         raise KiFehler('leer')
     return text[:1500]
 
@@ -1194,7 +1212,8 @@ def ki_arbeit(sid, nr):
         except KiFehler as e:
             ki_ereignis(sid, 'ki_fehler', {'aufgabe': nr, 'grund': e.grund})
             return
-        except Exception:                                  # nie den Worker mit unerwarteten Fehlern abbrechen
+        except Exception as e:                             # nie den Worker mit unerwarteten Fehlern abbrechen
+            print(f'[KI] unerwarteter Fehler: {type(e).__name__}: {str(e)[:200]}', flush=True)
             ki_ereignis(sid, 'ki_fehler', {'aufgabe': nr, 'grund': 'dienst'})
             return
         if lade_hilfe(sid).get(nr) != 'ki':                 # Lehrkraft hat die KI inzwischen wieder weggenommen
